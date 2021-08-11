@@ -9,6 +9,34 @@ contract FlightSuretyData {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
+    uint AIRLINE_REGISTRATION_LIMIT = 5;
+    uint AIRLINE_FUNDING_COST = 10 ether;
+    uint PASSENGER_INSURANCE_LIMIT = 1 ether;
+
+    address[] multiSig = new address[](0);
+
+    mapping(address => Airline) private airlines;
+    mapping(string => Flight) private flights;
+    mapping(bytes32 => Passenger) private insurees;
+
+    struct Airline {
+        address airline;
+        bool isRegistered;
+        bool isFunded;
+    }
+
+    struct Flight {
+        address airline;
+        string flightId;  
+        uint timestamp;
+    }
+
+    struct Passenger {
+        uint insuranceAmount;
+        uint creditAmount;
+    }
+
+    uint registeredAirlines = 0;
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
 
@@ -16,17 +44,25 @@ contract FlightSuretyData {
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
 
+    event AirlineRegistered(address airline);
+    event AirlineFunded(address airline);
+    event FlightRegistered(address airline, string flightId, uint timestamp);
+    event InsurancePurchased(string flightId, address passenger, uint insuranceAmount);
+    event CreditIssued(string flightId, address passenger, uint creditAmount);
+    event CreditTransferred(string flightId, address passenger, uint creditAmount);
 
     /**
     * @dev Constructor
     *      The deploying account becomes contractOwner
     */
-    constructor
-                                (
-                                ) 
-                                public 
-    {
+    constructor() public {
         contractOwner = msg.sender;
+        airlines[contractOwner] = Airline({
+            airline: contractOwner,
+            isRegistered: true,
+            isFunded: true
+        });
+        registeredAirlines = registeredAirlines + 1;
     }
 
     /********************************************************************************************/
@@ -41,8 +77,7 @@ contract FlightSuretyData {
     *      This is used on all state changing functions to pause the contract in 
     *      the event there is an issue that needs to be fixed
     */
-    modifier requireIsOperational() 
-    {
+    modifier requireIsOperational() {
         require(operational, "Contract is currently not operational");
         _;  // All modifiers require an "_" which indicates where the function body will be added
     }
@@ -50,9 +85,13 @@ contract FlightSuretyData {
     /**
     * @dev Modifier that requires the "ContractOwner" account to be the function caller
     */
-    modifier requireContractOwner()
-    {
+    modifier requireContractOwner() {
         require(msg.sender == contractOwner, "Caller is not contract owner");
+        _;
+    }
+
+    modifier requireIsRegisteredCaller() {
+        require(airlines[msg.sender].isRegistered, "Caller is not registered");
         _;
     }
 
@@ -65,28 +104,32 @@ contract FlightSuretyData {
     *
     * @return A bool that is the current operating status
     */      
-    function isOperational() 
-                            public 
-                            view 
-                            returns(bool) 
-    {
+    function isOperational() public view returns(bool) {
         return operational;
     }
-
 
     /**
     * @dev Sets contract operations on/off
     *
     * When operational mode is disabled, all write transactions except for this one will fail
     */    
-    function setOperatingStatus
-                            (
-                                bool mode
-                            ) 
-                            external
-                            requireContractOwner 
-    {
+    function setOperatingStatus(bool mode) external requireContractOwner {
         operational = mode;
+    }
+
+    function isRegistered() public view returns(bool) {
+        return airlines[msg.sender].isRegistered;
+    }
+
+    function setIsRegistered(address airline, bool registrationStatus) external requireContractOwner {
+        airlines[airline].isRegistered = registrationStatus;
+        if(registrationStatus == true) {
+            registeredAirlines = registeredAirlines + 1;
+        } else {
+            if(registeredAirlines > 0) {
+                registeredAirlines = registeredAirlines - 1;
+            }
+        }
     }
 
     /********************************************************************************************/
@@ -98,50 +141,90 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function registerAirline
-                            (   
-                            )
-                            external
-                            pure
-    {
+    function registerAirline(address airline) external requireIsOperational requireIsRegisteredCaller {
+        if(registeredAirlines < AIRLINE_REGISTRATION_LIMIT) {
+            airlines[airline] = Airline({
+                airline: airline,
+                isRegistered: true,
+                isFunded: false
+            });
+            emit AirlineRegistered(airline);
+        } else {
+            // Multi-party concensus of 50%
+            bool alreadySigned = false;
+            for(uint count = 0; count < multiSig.length; count++) {
+                if(multiSig[count] == msg.sender) {
+                    alreadySigned = true;
+                    break;
+                }
+            }
+
+            require(!alreadySigned, "Caller has already signed");
+
+            multiSig.push(msg.sender);
+            if(multiSig.length >= registeredAirlines.div(2)) {
+                airlines[airline] = Airline({
+                    airline: airline,
+                    isRegistered: true,
+                    isFunded: false
+                });
+                multiSig = new address[](0);
+                emit AirlineRegistered(airline);
+            }
+        }
     }
 
+    function registerFlight(address airline, string flightId, uint timestamp) external requireIsOperational {
+        if(msg.sender == airlines[msg.sender].airline) {
+            flights[flightId] = Flight({
+                airline: airline,
+                flightId: flightId,
+                timestamp: timestamp
+            });
+            emit FlightRegistered(airline, flightId, timestamp);
+        }
+    }
 
    /**
     * @dev Buy insurance for a flight
     *
     */   
-    function buy
-                            (                             
-                            )
-                            external
-                            payable
-    {
-
+    function buy(string flightId, address passenger) external payable requireIsOperational {
+        if(msg.value <= PASSENGER_INSURANCE_LIMIT) {
+            bytes32 key = keccak256(abi.encodePacked(flightId, passenger));
+            insurees[key] = Passenger({
+                insuranceAmount: msg.value,
+                creditAmount: 0
+            });
+            emit InsurancePurchased(flightId, passenger, msg.value);
+        }
     }
 
     /**
      *  @dev Credits payouts to insurees
     */
-    function creditInsurees
-                                (
-                                )
-                                external
-                                pure
-    {
+    function creditInsurees(string flightId, address passenger) external requireIsOperational {
+        bytes32 key = keccak256(abi.encodePacked(flightId, passenger));
+        uint256 creditAmount = insurees[key].insuranceAmount.mul(15).div(10);
+        if(creditAmount > 0) {
+            insurees[key].creditAmount = creditAmount;
+            emit CreditIssued(flightId, passenger, creditAmount);
+        }
     }
-    
 
     /**
      *  @dev Transfers eligible payout funds to insuree
      *
     */
-    function pay
-                            (
-                            )
-                            external
-                            pure
-    {
+    function pay(string flightId) external requireIsOperational {
+        // checks-effects-interactions guard
+        bytes32 key = keccak256(abi.encodePacked(flightId, msg.sender));
+        uint256 creditAmount = insurees[key].creditAmount;
+        if(creditAmount > 0) {
+            insurees[key].creditAmount = 0;
+            msg.sender.transfer(creditAmount);
+            emit CreditTransferred(flightId, msg.sender, creditAmount);
+        }
     }
 
    /**
@@ -149,24 +232,14 @@ contract FlightSuretyData {
     *      resulting in insurance payouts, the contract should be self-sustaining
     *
     */   
-    function fund
-                            (   
-                            )
-                            public
-                            payable
-    {
+    function fund() public payable requireIsOperational {
+        if(msg.value == AIRLINE_FUNDING_COST) {
+            airlines[msg.sender].isFunded = true;
+            emit AirlineFunded(msg.sender);
+        }
     }
 
-    function getFlightKey
-                        (
-                            address airline,
-                            string memory flight,
-                            uint256 timestamp
-                        )
-                        pure
-                        internal
-                        returns(bytes32) 
-    {
+    function getFlightKey(address airline, string memory flight, uint256 timestamp) pure internal returns(bytes32) {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
 
@@ -174,10 +247,7 @@ contract FlightSuretyData {
     * @dev Fallback function for funding smart contract.
     *
     */
-    function() 
-                            external 
-                            payable 
-    {
+    function() external payable {
         fund();
     }
 

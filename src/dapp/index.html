@@ -1,33 +1,165 @@
 <!doctype html>
 <html lang="en">
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>FlightSurety</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-</head>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>FlightSurety</title>
+        <link rel="stylesheet" href="flightsurety.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
 
-<body>
+    </head>
 
-    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-        <a class="navbar-brand" href="#">FlightSurety</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault"
-            aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </nav>
-
-    <main class="container">
-
-        <div id="display-wrapper" class="top-20">
-        </div>
-        <div class="row top-20">
-            <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
-        </div>
-    </main>
-
-</body>
+    <body class="has-background-dark">
+        <section class="hero is-danger is-small">
+            <div class="hero-body">
+                <div class="columns">
+                    <div class="column has-text-centered">
+                        <p class="title">
+                            FlightSurety
+                        </p>
+                        <span class="icon">
+                            <i class="fas fa-2x fa-plane-departure"></i>
+                        </span>
+                        <p class="subtitle">
+                            <b>Web 3.0 Flight Insurance for all.</b>
+                        </p>
+                        <div class="field">
+                            <div class="control">
+                                <label class="label">Contract responses</label>
+                                <input class="input" id="display-wrapper" type="text" value="" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-foot">
+                <nav class="tabs is-boxed is-fullwidth">
+                    <div class="container">
+                        <ul>
+                            <li id="tabs">
+                                <a onclick="openTab(event, 'flight_status_tab')">Flight Status</a>
+                            </li>
+                            <li id="tabs">
+                                <a onclick="openTab(event, 'airline_tab')">Airline</a>
+                            </li>
+                            <li id="tabs">
+                                <a onclick="openTab(event, 'passenger_tab')">Passenger</a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </section>
+        <section class="section">
+            <div class="container">
+                <div class="tab_content" id="flight_status_tab">
+                    <div class="columns is-centered">
+                        <div class="column is-one-third has-text-centered">
+                            <h1 class="title is-3">View flight status</h1>
+                            <div class="field">
+                                <label class="label">Enter flight number</label>
+                                <div class="control">
+                                    <input class="input" type="text">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <div class="control">
+                                <button class="button is-danger">Get flight status</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab_content" style="display: none;" id="airline_tab">
+                    <div class="columns is-centered">
+                        <div class="column is-one-third has-text-centered">
+                            <h1 class="title is-3">Register an Airline</h1>
+                            <div class="field">
+                                <label class="label">Enter airline address</label>
+                                <div class="control">
+                                    <input class="input" type="text">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <div class="control">
+                                    <button class="button is-danger">Register</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-one-third has-text-centered">
+                            <h1 class="title is-3">Fund an Airline for 10 ETH</h1>
+                            <div class="field">
+                                <label class="label">Enter airline address</label>
+                                <div class="control">
+                                    <input class="input" type="text">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <div class="control">
+                                <button class="button is-danger">Fund</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab_content" style="display: none;" id="passenger_tab">
+                <div class="columns is-centered">
+                    <div class="column is-one-third has-text-centered">
+                        <h1 class="title is-3">Buy insurance</h1>
+                        <div class="field">
+                            <label class="label">Enter flightId</label>
+                            <div class="control">
+                                <input class="input" type="text">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label class="label">Enter amount (<= 1 ETH)</label>
+                            <div class="control">
+                                <input class="input" type="text">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="control">
+                                <button class="button is-danger">Buy</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-one-third has-text-centered">
+                        <h1 class="title is-3">Claim payout</h1>
+                        <div class="field">
+                            <label class="label">Enter flightId</label>
+                            <div class="control">
+                                <input class="input" type="text">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="control">
+                            <button class="button is-danger">Claim</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </section>
+        <script>
+            // Based on - https://stackoverflow.com/questions/44891771/bulma-css-tab-switcher
+            function openTab(evt, tabTitle) {
+                var i, tab_content, tabs;
+                tab_content = document.getElementsByClassName("tab_content");
+                for (i = 0; i < tab_content.length; i++) {
+                    tab_content[i].style.display = "none";
+                }
+                tabs = document.getElementsByClassName("tabs");
+                for (i = 0; i < tabs.length; i++) {
+                    tabs[i].className = tabs[i].className.replace("is-active", "");
+                }
+                document.getElementById(tabTitle).style.display = "block";
+                evt.currentTarget.className += " is-active";
+            }
+        </script>
+    </body>
 
 </html>

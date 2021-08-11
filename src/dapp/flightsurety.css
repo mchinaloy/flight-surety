@@ -1,42 +1,32 @@
-body {
-    background-image: url('flight.jpg'); /* Source: iStockPhoto */
-    background-repeat: no-repeat;
+html,body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  }
+  
+  .hero.is-info {
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
     background-size: cover;
-}
+  }
 
-.container {
-    margin-top: 400px;
-    background-color: #000;
-    opacity: 0.9;
-    color: #fff;
-    padding: 40px;
-}
+  .hero .nav, .hero.is-success .nav {
+    -webkit-box-shadow: none;
+    box-shadow: none;
+  }
 
-.top-20 {
-    margin-top: 20px;
-}
+  .hero .subtitle {
+    padding: 3rem 0;
+    line-height: 1.5;
+  }
 
-h5 {
-    color: #999999;
-}
+  p {
+      color: white;
+  }
 
-section {
-    margin-bottom: 50px;
-}
+  .label {
+      color: white;
+  }
 
-.field {
-    font-weight: bold;
-    text-align: right;
-}
-
-.field-value {
-    color: #0e7fa8;
-}
-
-label.form {
-    font-size: 14px;
-    margin-right: 20px;
-}
-input {
-    margin-right: 30px;
-}
+  .title {
+      color: white;
+  }
