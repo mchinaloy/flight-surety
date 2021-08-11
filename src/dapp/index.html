@@ -55,54 +55,30 @@
             <div class="container">
                 <div class="tab_content" id="flight_status_tab">
                     <div class="columns is-centered">
-                        <div class="column is-half has-text-centered">
+                        <div class="column has-text-centered">
                             <h1 class="title is-3">View flight status</h1>
-                            <table class="table is-striped is-hoverable is-fullwidth">
-                                <thead>
-                                    <tr>
-                                        <th>Flight #</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tfoot>
-                                    <tr>
-                                        <th>Flight #</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </tfoot>
-                                <tbody>
-                                    <tr>
-                                        <td><b>AB12345</b></td>
-                                        <td>
-                                            <div class="field">
-                                                <div class="control">
-                                                <button class="button is-danger">Get flight status</button>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>CD12345</b></td>
-                                        <td>
-                                            <div class="field">
-                                                <div class="control">
-                                                <button class="button is-danger">Get flight status</button>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>EF67891</b></td>
-                                        <td>
-                                            <div class="field">
-                                                <div class="control">
-                                                <button class="button is-danger">Get flight status</button>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        </div>
+                    </div>
+                    <div class="columns is-centered">
+                        <div class="column is-half has-text-centered">
+                            <div class="field">
+                                <div class="select">
+                                    <select id="flight-number">
+                                        <option>Select flight</option>
+                                        <option>ABC1234</option>
+                                        <option>DEF5678</option>
+                                        <option>GHI9101</option>
+                                        <option>JKL1011</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>  
+                        <div class="column is-half has-text-centered">
+                            <div class="field">
+                                <div class="control">
+                                    <button id="submit-oracle" class="button is-danger">Get flight status</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -113,14 +89,25 @@
                         <div class="column is-one-third has-text-centered">
                             <h1 class="title is-3">Register an Airline</h1>
                             <div class="field">
+                                <div class="select">
+                                    <select id="register-airline-sender">
+                                        <option>Select airline</option>
+                                        <option value="0x0C419BC66064A45C37cf9744113AdC6EB4f1a314">Block Jet</option>
+                                        <option value="0x15d67662023cCe9F22927969D279DA66B09E29CF">Surety Airways</option>
+                                        <option value="0xFA07E17709089616616daA21586D51c5dA100714">Bitcoin Air</option>
+                                        <option value="0x694c0B5832f2B9b045dDa7E4d8D5a07cd5398762">Udacity Airlines</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="field">
                                 <label class="label">Enter airline address</label>
                                 <div class="control">
-                                    <input id="register_airline_address" class="input" type="text">
+                                    <input id="register-airline-address" class="input" type="text">
                                 </div>
                             </div>
                             <div class="field">
                                 <div class="control">
-                                    <button id="register-airline" class="button is-danger">Register</button>
+                                    <button id="register" class="button is-danger">Register</button>
                                 </div>
                             </div>
                         </div>
@@ -129,12 +116,12 @@
                             <div class="field">
                                 <label class="label">Enter airline address</label>
                                 <div class="control">
-                                    <input class="input" type="text">
+                                    <input id="fund-airline-address" class="input" type="text">
                                 </div>
                             </div>
                             <div class="field">
                                 <div class="control">
-                                <button class="button is-danger">Fund</button>
+                                <button id="fund" class="button is-danger">Fund</button>
                             </div>
                         </div>
                     </div>
@@ -146,34 +133,45 @@
                         <div class="column is-one-third has-text-centered">
                             <h1 class="title is-3">Buy insurance</h1>
                             <div class="field">
-                                <label class="label">Enter flightId</label>
-                                <div class="control">
-                                    <input class="input" type="text">
+                                <div class="select">
+                                    <select id="buy-insurance-flight">
+                                        <option>Select flight</option>
+                                        <option>ABC1234</option>
+                                        <option>DEF5678</option>
+                                        <option>GHI9101</option>
+                                        <option>JKL1011</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="field">
                                 <label class="label">Enter amount (<= 1 ETH)</label>
                                 <div class="control">
-                                    <input class="input" type="text">
+                                    <input id="buy-insurance-amount" class="input" type="text">
                                 </div>
                             </div>
                             <div class="field">
                                 <div class="control">
-                                    <button class="button is-danger">Buy</button>
+                                    <button id="buy" class="button is-danger">Buy</button>
                                 </div>
                             </div>
                         </div>
                         <div class="column is-one-third has-text-centered">
                             <h1 class="title is-3">Claim payout</h1>
                             <div class="field">
-                                <label class="label">Enter flightId</label>
-                                <div class="control">
-                                    <input class="input" type="text">
+                                <div class="select">
+                                    <select id="claim-insurance-flight">
+                                        <option>Select flight</option>
+                                        <option>ABC1234</option>
+                                        <option>DEF5678</option>
+                                        <option>GHI9101</option>
+                                        <option>JKL1011</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="field">
                                 <div class="control">
-                                <button class="button is-danger">Claim</button>
+                                    <button id="claim" class="button is-danger">Claim</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -181,6 +179,12 @@
             </div>
         </section>
         <script>
+            var dropdown = document.querySelector('.dropdown');
+            dropdown.addEventListener('click', function(event) {
+            event.stopPropagation();
+            dropdown.classList.toggle('is-active');
+            });
+
             // Based on - https://stackoverflow.com/questions/44891771/bulma-css-tab-switcher
             function openTab(evt, tabTitle) {
                 var i, tab_content, tabs;

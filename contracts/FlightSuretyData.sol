@@ -27,7 +27,7 @@ contract FlightSuretyData {
 
     struct Flight {
         address airline;
-        string flightId;  
+        string flight;  
         uint timestamp;
     }
 
@@ -46,10 +46,10 @@ contract FlightSuretyData {
 
     event AirlineRegistered(address airline);
     event AirlineFunded(address airline);
-    event FlightRegistered(address airline, string flightId, uint timestamp);
-    event InsurancePurchased(string flightId, address passenger, uint insuranceAmount);
-    event CreditIssued(string flightId, address passenger, uint creditAmount);
-    event CreditTransferred(string flightId, address passenger, uint creditAmount);
+    event FlightRegistered(address airline, string flight, uint timestamp);
+    event InsurancePurchased(string flight, address passenger, uint insuranceAmount);
+    event CreditIssued(string flight, address passenger, uint creditAmount);
+    event CreditTransferred(string flight, address passenger, uint creditAmount);
 
     /**
     * @dev Constructor
@@ -90,8 +90,8 @@ contract FlightSuretyData {
         _;
     }
 
-    modifier requireIsRegisteredCaller() {
-        require(airlines[msg.sender].isRegistered, "Caller is not registered");
+    modifier requireIsRegisteredCaller(address sender) {
+        require(airlines[sender].isRegistered, "Caller is not registered");
         _;
     }
 
@@ -141,7 +141,7 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function registerAirline(address airline) external requireIsOperational requireIsRegisteredCaller {
+    function registerAirline(address sender, address airline) external requireIsOperational requireIsRegisteredCaller(sender) {
         if(registeredAirlines < AIRLINE_REGISTRATION_LIMIT) {
             airlines[airline] = Airline({
                 airline: airline,
@@ -174,14 +174,14 @@ contract FlightSuretyData {
         }
     }
 
-    function registerFlight(address airline, string flightId, uint timestamp) external requireIsOperational {
+    function registerFlight(address airline, string flight, uint timestamp) external requireIsOperational {
         if(msg.sender == airlines[msg.sender].airline) {
-            flights[flightId] = Flight({
+            flights[flight] = Flight({
                 airline: airline,
-                flightId: flightId,
+                flight: flight,
                 timestamp: timestamp
             });
-            emit FlightRegistered(airline, flightId, timestamp);
+            emit FlightRegistered(airline, flight, timestamp);
         }
     }
 
@@ -189,26 +189,26 @@ contract FlightSuretyData {
     * @dev Buy insurance for a flight
     *
     */   
-    function buy(string flightId, address passenger) external payable requireIsOperational {
-        if(msg.value <= PASSENGER_INSURANCE_LIMIT) {
-            bytes32 key = keccak256(abi.encodePacked(flightId, passenger));
+    function buy(string flight, address passenger, uint value) external payable requireIsOperational {
+        if(value <= PASSENGER_INSURANCE_LIMIT) {
+            bytes32 key = keccak256(abi.encodePacked(flight, passenger));
             insurees[key] = Passenger({
-                insuranceAmount: msg.value,
+                insuranceAmount: value,
                 creditAmount: 0
             });
-            emit InsurancePurchased(flightId, passenger, msg.value);
+            emit InsurancePurchased(flight, passenger, value);
         }
     }
 
     /**
      *  @dev Credits payouts to insurees
     */
-    function creditInsurees(string flightId, address passenger) external requireIsOperational {
-        bytes32 key = keccak256(abi.encodePacked(flightId, passenger));
+    function claim(string flight, address passenger) external requireIsOperational {
+        bytes32 key = keccak256(abi.encodePacked(flight, passenger));
         uint256 creditAmount = insurees[key].insuranceAmount.mul(15).div(10);
         if(creditAmount > 0) {
             insurees[key].creditAmount = creditAmount;
-            emit CreditIssued(flightId, passenger, creditAmount);
+            emit CreditIssued(flight, passenger, creditAmount);
         }
     }
 
@@ -216,14 +216,14 @@ contract FlightSuretyData {
      *  @dev Transfers eligible payout funds to insuree
      *
     */
-    function pay(string flightId) external requireIsOperational {
+    function pay(string flight) external requireIsOperational {
         // checks-effects-interactions guard
-        bytes32 key = keccak256(abi.encodePacked(flightId, msg.sender));
+        bytes32 key = keccak256(abi.encodePacked(flight, msg.sender));
         uint256 creditAmount = insurees[key].creditAmount;
         if(creditAmount > 0) {
             insurees[key].creditAmount = 0;
             msg.sender.transfer(creditAmount);
-            emit CreditTransferred(flightId, msg.sender, creditAmount);
+            emit CreditTransferred(flight, msg.sender, creditAmount);
         }
     }
 
@@ -232,10 +232,10 @@ contract FlightSuretyData {
     *      resulting in insurance payouts, the contract should be self-sustaining
     *
     */   
-    function fund() public payable requireIsOperational {
+    function fund(address airline) public payable requireIsOperational {
         if(msg.value == AIRLINE_FUNDING_COST) {
-            airlines[msg.sender].isFunded = true;
-            emit AirlineFunded(msg.sender);
+            airlines[airline].isFunded = true;
+            emit AirlineFunded(airline);
         }
     }
 
@@ -248,7 +248,7 @@ contract FlightSuretyData {
     *
     */
     function() external payable {
-        fund();
+        fund(contractOwner);
     }
 
 

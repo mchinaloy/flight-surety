@@ -42,7 +42,7 @@ contract FlightSuretyApp {
     */
     modifier requireIsOperational() {
          // Modify to call data contract's status
-        require(isOperational() == true, "Contract is currently not operational");  
+        require(flightSuretyData.isOperational(), "Contract is currently not operational");  
         _;  // All modifiers require an "_" which indicates where the function body will be added
     }
 
@@ -84,35 +84,37 @@ contract FlightSuretyApp {
     * @dev Add an airline to the registration queue
     *
     */   
-    function registerAirline() external requireIsOperational {
-        flightSuretyData.registerAirline(msg.sender);
+    function registerAirline(address sender, address airline) external requireIsOperational {
+        flightSuretyData.registerAirline(sender, airline);
     }
 
    /**
     * @dev Register a future flight for insuring.
     *
     */  
-    function registerFlight(address airline, string flightId, uint256 timestamp) external requireIsOperational {
-        flightSuretyData.registerFlight(airline, flightId, timestamp);
+    function registerFlight(address airline, string flight, uint256 timestamp) external requireIsOperational {
+        flightSuretyData.registerFlight(airline, flight, timestamp);
     }
     
+    function fund(address airline) external payable requireIsOperational {
+        flightSuretyData.fund(airline);
+    }
+
+    function buy(string flight, address passenger, uint value) external payable requireIsOperational {
+        flightSuretyData.buy(flight, passenger, value);
+    }
+
+    function claim(string flight, address passenger) external requireIsOperational {
+        flightSuretyData.claim(flight, passenger);
+    }
+
    /**
     * @dev Called after oracle has updated flight status
     *
     */  
-    function processFlightStatus
-                                (
-                                    address airline,
-                                    string memory flight,
-                                    uint256 timestamp,
-                                    uint8 statusCode
-                                )
-                                internal
-                                pure
-    {
+    function processFlightStatus(address airline, string memory flight, uint256 timestamp, uint8 statusCode) internal pure {
         
     }
-
 
     // Generate a request for oracles to fetch flight information
     function fetchFlightStatus(address airline, string flight, uint256 timestamp) external requireIsOperational {
@@ -265,10 +267,10 @@ contract FlightSuretyApp {
 contract FlightSuretyData {
     function isOperational() public view returns(bool) {}
     function setOperatingStatus(bool mode) external {}
-    function registerAirline(address airline) external {}
-    function registerFlight(address airline, string flightId, uint256 timestamp) {}
-    function buy(string flightId, address passenger) external payable {}
-    function creditInsurees(string flightId, address passenger) external {}
-    function pay (string flightId) external {}
-    function fund() public payable {}
+    function registerAirline(address sender, address airline) external {}
+    function registerFlight(address airline, string flight, uint256 timestamp) {}
+    function buy(string flight, address passenger, uint value) external payable {}
+    function claim(string flight, address passenger) external {}
+    function pay(string flight) external {}
+    function fund(address airline) external payable {}
 }
