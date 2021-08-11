@@ -55,22 +55,59 @@
             <div class="container">
                 <div class="tab_content" id="flight_status_tab">
                     <div class="columns is-centered">
-                        <div class="column is-one-third has-text-centered">
+                        <div class="column is-half has-text-centered">
                             <h1 class="title is-3">View flight status</h1>
-                            <div class="field">
-                                <label class="label">Enter flight number</label>
-                                <div class="control">
-                                    <input class="input" type="text">
-                                </div>
-                            </div>
-                            <div class="field">
-                                <div class="control">
-                                <button class="button is-danger">Get flight status</button>
-                                </div>
-                            </div>
+                            <table class="table is-striped is-hoverable is-fullwidth">
+                                <thead>
+                                    <tr>
+                                        <th>Flight #</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tfoot>
+                                    <tr>
+                                        <th>Flight #</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </tfoot>
+                                <tbody>
+                                    <tr>
+                                        <td><b>AB12345</b></td>
+                                        <td>
+                                            <div class="field">
+                                                <div class="control">
+                                                <button class="button is-danger">Get flight status</button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>CD12345</b></td>
+                                        <td>
+                                            <div class="field">
+                                                <div class="control">
+                                                <button class="button is-danger">Get flight status</button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>EF67891</b></td>
+                                        <td>
+                                            <div class="field">
+                                                <div class="control">
+                                                <button class="button is-danger">Get flight status</button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="container">
                 <div class="tab_content" style="display: none;" id="airline_tab">
                     <div class="columns is-centered">
                         <div class="column is-one-third has-text-centered">
@@ -78,12 +115,12 @@
                             <div class="field">
                                 <label class="label">Enter airline address</label>
                                 <div class="control">
-                                    <input class="input" type="text">
+                                    <input id="register_airline_address" class="input" type="text">
                                 </div>
                             </div>
                             <div class="field">
                                 <div class="control">
-                                    <button class="button is-danger">Register</button>
+                                    <button id="register-airline" class="button is-danger">Register</button>
                                 </div>
                             </div>
                         </div>
@@ -103,43 +140,44 @@
                     </div>
                 </div>
             </div>
-            <div class="tab_content" style="display: none;" id="passenger_tab">
-                <div class="columns is-centered">
-                    <div class="column is-one-third has-text-centered">
-                        <h1 class="title is-3">Buy insurance</h1>
-                        <div class="field">
-                            <label class="label">Enter flightId</label>
-                            <div class="control">
-                                <input class="input" type="text">
+            <div class="container">
+                <div class="tab_content" style="display: none;" id="passenger_tab">
+                    <div class="columns is-centered">
+                        <div class="column is-one-third has-text-centered">
+                            <h1 class="title is-3">Buy insurance</h1>
+                            <div class="field">
+                                <label class="label">Enter flightId</label>
+                                <div class="control">
+                                    <input class="input" type="text">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label">Enter amount (<= 1 ETH)</label>
+                                <div class="control">
+                                    <input class="input" type="text">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <div class="control">
+                                    <button class="button is-danger">Buy</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="field">
-                            <label class="label">Enter amount (<= 1 ETH)</label>
-                            <div class="control">
-                                <input class="input" type="text">
+                        <div class="column is-one-third has-text-centered">
+                            <h1 class="title is-3">Claim payout</h1>
+                            <div class="field">
+                                <label class="label">Enter flightId</label>
+                                <div class="control">
+                                    <input class="input" type="text">
+                                </div>
                             </div>
-                        </div>
-                        <div class="field">
-                            <div class="control">
-                                <button class="button is-danger">Buy</button>
+                            <div class="field">
+                                <div class="control">
+                                <button class="button is-danger">Claim</button>
                             </div>
-                        </div>
-                    </div>
-                    <div class="column is-one-third has-text-centered">
-                        <h1 class="title is-3">Claim payout</h1>
-                        <div class="field">
-                            <label class="label">Enter flightId</label>
-                            <div class="control">
-                                <input class="input" type="text">
-                            </div>
-                        </div>
-                        <div class="field">
-                            <div class="control">
-                            <button class="button is-danger">Claim</button>
                         </div>
                     </div>
                 </div>
-            </div>
             </div>
         </section>
         <script>

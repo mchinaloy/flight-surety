@@ -14,7 +14,14 @@ import './flightsurety.css';
             console.log(error,result);
             display('Running contract operational check, status is', [ { label: '', error: error, value: result} ]);
         });
-    
+        
+        DOM.elid('register-airline').addEventListener('click', () => {
+            let airlineAddress = DOM.elid('register_airline_address').value;
+            contract.registerAirline(airlineAddress, (error, result) => {
+                console.log(error,result);
+                display('Registering airline, status is', [{label: '', error: error, value: result}]);
+            });
+        });
 
         // User-submitted transaction
         DOM.elid('submit-oracle').addEventListener('click', () => {
@@ -29,7 +36,6 @@ import './flightsurety.css';
     
 
 })();
-
 
 function display(message, results) {
     let displayDiv = DOM.elid("display-wrapper");
