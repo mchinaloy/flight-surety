@@ -14,9 +14,9 @@ import './flightsurety.css';
         });
         
         DOM.elid('register').addEventListener('click', () => {
-            let sender = DOM.elid('register-airline-sender').value;
+            let proposer = DOM.elid('register-airline-proposer').value;
             let airlineAddress = DOM.elid('register-airline-address').value;
-            contract.registerAirline(sender, airlineAddress, (error, result) => {
+            contract.registerAirline(proposer, airlineAddress, (error, result) => {
                 display('Registering airline, status is', [{label: '', error: error, value: result.message}]);
             });
         });
@@ -29,27 +29,28 @@ import './flightsurety.css';
         });
 
         DOM.elid('buy').addEventListener('click', () => {
+            let airline = DOM.elid('buy-insurance-airline').value;
             let flight = DOM.elid('buy-insurance-flight').value;
             let amount = DOM.elid('buy-insurance-amount').value;
-            contract.buy(flight, amount, (error, result) => {
+            contract.buy(airline, flight, amount, (error, result) => {
                 display('Insurance purchase, status is', [{label: '', error: error, value: result.message}]);
             });
         });
 
-        DOM.elid('claim').addEventListener('click', () => {
-            let flight = DOM.elid('claim-insurance-flight').value;
-            contract.claim(flight, (error, result) => {
-                display('Insurance claim, status is', [{label: '', error: error, value: result.message}])
+        DOM.elid('payout').addEventListener('click', () => {
+            let airline = DOM.elid('payout-insurance-airline').value;
+            let flight = DOM.elid('payout-insurance-flight').value;
+            contract.payout(airline, flight, (error, result) => {
+                display('Insurance payout, status is', [{label: '', error: error, value: result.message}])
             });
         });
 
         // User-submitted transaction
         DOM.elid('submit-oracle').addEventListener('click', () => {
             let flight = DOM.elid('flight-number').value;
-            console.log(flight);
             // Write transaction
             contract.fetchFlightStatus(flight, (error, result) => {
-                display('Oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
+                display('Refreshed Flight Status', [ { label: '', error: error, value: result.flight + ' ' + result.timestamp} ]);
             });
         })
     

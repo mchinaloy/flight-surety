@@ -42,7 +42,7 @@ contract FlightSuretyApp {
     */
     modifier requireIsOperational() {
          // Modify to call data contract's status
-        require(flightSuretyData.isOperational(), "Contract is currently not operational");  
+        require(flightSuretyData.isOperational(), "Contract is currently not operational.");  
         _;  // All modifiers require an "_" which indicates where the function body will be added
     }
 
@@ -50,7 +50,7 @@ contract FlightSuretyApp {
     * @dev Modifier that requires the "ContractOwner" account to be the function caller
     */
     modifier requireContractOwner() {
-        require(msg.sender == contractOwner, "Caller is not contract owner");
+        require(msg.sender == contractOwner, "Caller is not contract owner.");
         _;
     }
 
@@ -84,8 +84,8 @@ contract FlightSuretyApp {
     * @dev Add an airline to the registration queue
     *
     */   
-    function registerAirline(address sender, address airline) external requireIsOperational {
-        flightSuretyData.registerAirline(sender, airline);
+    function registerAirline(address proposer, address airline) external requireIsOperational {
+        flightSuretyData.registerAirline(proposer, airline);
     }
 
    /**
@@ -97,23 +97,25 @@ contract FlightSuretyApp {
     }
     
     function fund(address airline) external payable requireIsOperational {
-        flightSuretyData.fund(airline);
+        flightSuretyData.fund(airline, msg.value);
     }
 
-    function buy(string flight, address passenger, uint value) external payable requireIsOperational {
-        flightSuretyData.buy(flight, passenger, value);
+    function buy(address airline, string flight, address passenger, uint value) external payable requireIsOperational {
+        flightSuretyData.buy(airline, flight, passenger, value);
     }
 
-    function claim(string flight, address passenger) external requireIsOperational {
-        flightSuretyData.claim(flight, passenger);
+    function payout(address airline, string flight, address passenger) external requireIsOperational {
+        flightSuretyData.payout(airline, flight, passenger);
     }
 
    /**
     * @dev Called after oracle has updated flight status
     *
     */  
-    function processFlightStatus(address airline, string memory flight, uint256 timestamp, uint8 statusCode) internal pure {
-        
+    function processFlightStatus(address airline, string memory flight, uint256 timestamp, uint8 statusCode) internal {
+        if(statusCode > STATUS_CODE_ON_TIME) {
+            flightSuretyData.credit(airline, flight);
+        }
     }
 
     // Generate a request for oracles to fetch flight information
@@ -178,7 +180,7 @@ contract FlightSuretyApp {
     // Register an oracle with the contract
     function registerOracle() external payable {
         // Require registration fee
-        require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
+        require(msg.value >= REGISTRATION_FEE, "Registration fee is required.");
 
         uint8[3] memory indexes = generateIndexes(msg.sender);
 
@@ -189,8 +191,7 @@ contract FlightSuretyApp {
     }
 
     function getMyIndexes() view external returns(uint8[3]) {
-        require(oracles[msg.sender].isRegistered, "Not registered as an oracle");
-
+        require(oracles[msg.sender].isRegistered, "Not registered as an oracle.");
         return oracles[msg.sender].indexes;
     }
 
@@ -199,11 +200,11 @@ contract FlightSuretyApp {
     // and matches one of the three Indexes randomly assigned to the oracle at the
     // time of registration (i.e. uninvited oracles are not welcome)
     function submitOracleResponse(uint8 index, address airline, string flight, uint256 timestamp, uint8 statusCode) external {
-        require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
+        require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request.");
 
 
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp)); 
-        require(oracleResponses[key].isOpen, "Flight or timestamp do not match oracle request");
+        require(oracleResponses[key].isOpen, "Flight or timestamp do not match oracle request.");
 
         oracleResponses[key].responses[statusCode].push(msg.sender);
 
@@ -220,11 +221,7 @@ contract FlightSuretyApp {
     }
 
 
-    function getFlightKey(address airline, string flight, uint256 timestamp)
-                        pure
-                        internal
-                        returns(bytes32) 
-    {
+    function getFlightKey(address airline, string flight, uint256 timestamp) pure internal returns(bytes32) {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
 
@@ -267,10 +264,10 @@ contract FlightSuretyApp {
 contract FlightSuretyData {
     function isOperational() public view returns(bool) {}
     function setOperatingStatus(bool mode) external {}
-    function registerAirline(address sender, address airline) external {}
+    function registerAirline(address proposer, address airline) external {}
     function registerFlight(address airline, string flight, uint256 timestamp) {}
-    function buy(string flight, address passenger, uint value) external payable {}
-    function claim(string flight, address passenger) external {}
-    function pay(string flight) external {}
-    function fund(address airline) external payable {}
+    function buy(address airline, string flight, address passenger, uint value) external payable {}
+    function credit(address airline, string flight) external {}
+    function payout(address airline, string flight, address passenger) external {}
+    function fund(address airline, uint value) external payable {}
 }

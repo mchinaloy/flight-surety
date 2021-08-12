@@ -8,14 +8,8 @@ let web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('htt
 web3.eth.defaultAccount = web3.eth.accounts[0];
 let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
 
-let STATUS_CODE_UNKNOWN = 0;
-let STATUS_CODE_ON_TIME = 10;
-let STATUS_CODE_LATE_AIRLINE = 20;
-let STATUS_CODE_LATE_WEATHER = 30;
-let STATUS_CODE_LATE_TECHNICAL = 40;
-let STATUS_CODE_LATE_OTHER = 50;
-
-let NUM_OF_ORACLES = 10;
+let STATUS_CODES = [0, 10, 20, 30, 40, 50];
+let NUM_OF_ORACLES = 20;
 
 let oracles = [];
 
@@ -34,7 +28,7 @@ function registerOracles() {
                 } else {
                   let oracle = {
                     address: accounts[i],
-                    indices: result
+                    indices: String(result).split(',')
                   }
                   oracles.push(oracle);
                   console.log("Registered Oracle " + oracle.address + " indices " + oracle.indices);
@@ -46,18 +40,47 @@ function registerOracles() {
   });
 }
 
-// flightSuretyApp.events.OracleRequest({fromBlock: 0}, function (error, event) {
-//     if (error) { 
-//       console.log(error)
-//     }
-//     console.log(event)
-//     submitOracleResponse();
-// });
+flightSuretyApp.events.OracleRequest({fromBlock: 0}, function (error, event) {
+    if (error) { 
+      console.log(error)
+    }
 
-// function submitOracleResponse(index, airline, flight, timestamp) {
-//   flightSuretyApp.methods
-//     .submitOracleResponse(index, airline, flight, timestamp);
-// }
+    let index = event.returnValues.index;
+    console.log("Index received " + index);
+
+    for(let i=0; i < oracles.length; i++) {
+      for(let j=0; j < oracles[i].indices.length; j++) {
+        if(oracles[i].indices[j] === index) {
+          console.log("Index matched for Oracle");
+          submitOracleResponse(oracles[i], index, event.returnValues.airline, event.returnValues.flight, event.returnValues.timestamp);
+          break;
+        }   
+      }
+    }
+});
+
+function submitOracleResponse(oracle, index, airline, flight, timestamp) {
+  let randomStatusCode = STATUS_CODES[Math.floor(Math.random() * STATUS_CODES.length)]
+  let payload = {
+    oracle: oracle,
+    index: index,
+    airline: airline,
+    flight: flight,
+    timestamp: timestamp,
+    statusCode: randomStatusCode
+  }
+  console.log("Submitting response from Oracle " + oracle.address);
+  console.log(payload);
+  flightSuretyApp.methods
+    .submitOracleResponse(payload.index, payload.airline, payload.flight, payload.timestamp, payload.statusCode)
+    .send({from: payload.oracle.address}, (error, result) => {
+      if(error) {
+        console.log(error, payload);
+      } else {
+        console.log(result);
+      }
+    })
+}
 
 const app = express();
 

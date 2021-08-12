@@ -1,11 +1,11 @@
 
 var Test = require('../config/testConfig.js');
-//var BigNumber = require('bignumber.js');
 
 contract('Oracles', async (accounts) => {
 
-  const TEST_ORACLES_COUNT = 20;
+  const TEST_ORACLES_COUNT = 8;
   var config;
+  
   before('setup contract', async () => {
     config = await Test.Config(accounts);
 
@@ -19,29 +19,23 @@ contract('Oracles', async (accounts) => {
 
   });
 
-
   it('can register oracles', async () => {
-    
-    // ARRANGE
     let fee = await config.flightSuretyApp.REGISTRATION_FEE.call();
 
-    // ACT
-    for(let a=1; a<TEST_ORACLES_COUNT; a++) {      
+    for(let a=1; a <= TEST_ORACLES_COUNT; a++) {      
       await config.flightSuretyApp.registerOracle({ from: accounts[a], value: fee });
       let result = await config.flightSuretyApp.getMyIndexes.call({from: accounts[a]});
       console.log(`Oracle Registered: ${result[0]}, ${result[1]}, ${result[2]}`);
     }
+
   });
 
   it('can request flight status', async () => {
-    
-    // ARRANGE
     let flight = 'ND1309'; // Course number
     let timestamp = Math.floor(Date.now() / 1000);
 
     // Submit a request for oracles to get status information for a flight
     await config.flightSuretyApp.fetchFlightStatus(config.firstAirline, flight, timestamp);
-    // ACT
 
     // Since the Index assigned to each test account is opaque by design
     // loop through all the accounts and for each account, all its Indexes (indices?)
@@ -65,10 +59,6 @@ contract('Oracles', async (accounts) => {
 
       }
     }
-
-
   });
 
-
- 
 });

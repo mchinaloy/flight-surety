@@ -87,18 +87,21 @@
                         <div class="column is-one-third has-text-centered">
                             <h1 class="title is-3">Register an Airline</h1>
                             <div class="field">
+                                <label class="label">Select a proposer (Udacity Airlines is the first Airline)</label>
                                 <div class="select">
-                                    <select id="register-airline-sender">
+                                    <select id="register-airline-proposer">
                                         <option>Select airline</option>
-                                        <option value="0x0C419BC66064A45C37cf9744113AdC6EB4f1a314">Block Jet</option>
-                                        <option value="0x15d67662023cCe9F22927969D279DA66B09E29CF">Surety Airways</option>
-                                        <option value="0xFA07E17709089616616daA21586D51c5dA100714">Bitcoin Air</option>
-                                        <option value="0x694c0B5832f2B9b045dDa7E4d8D5a07cd5398762">Udacity Airlines</option>
+                                        <option value="0x4A6737CE60F73F5553E2cb61E6D4A0Cb5661933B">Udacity Airlines</option>
+                                        <option value="0xd95214EB57487F0667D9aC4142cc72bd861E6875">Block Jet</option>
+                                        <option value="0x13A0739d9DED0e70308b6d09e1c6753b843609FA">Surety Airways</option>
+                                        <option value="0x1946D55Fe9B4b2A2C4ad1f4837c5612e50d5e07f">Bitcoin Air</option>
+                                        <option value="0x6667Cf254C1fb66B5C99Cea8d16165cfE187591C">Ether Airways</option>
+                                        <option value="0xc3fD34ee4A62c4E1DfDCC45585Dfc62e1d93E1F1">Dash Air</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="field">
-                                <label class="label">Enter airline address</label>
+                                <label class="label">Enter airline address register</label>
                                 <div class="control">
                                     <input id="register-airline-address" class="input" type="text">
                                 </div>
@@ -110,7 +113,7 @@
                             </div>
                             <h1 class="title is-3">Fund an Airline for 10 ETH</h1>
                             <div class="field">
-                                <label class="label">Enter airline address</label>
+                                <label class="label">Enter airline address to fund</label>
                                 <div class="control">
                                     <input id="fund-airline-address" class="input" type="text">
                                 </div>
@@ -128,6 +131,20 @@
                     <div class="columns is-centered">
                         <div class="column is-one-third has-text-centered">
                             <h1 class="title is-3">Buy insurance</h1>
+                            <label class="label">Select airline</label>
+                            <div class="field">
+                                <div class="select">
+                                    <select id="buy-insurance-airline">
+                                        <option>Select airline</option>
+                                        <option value="0x4A6737CE60F73F5553E2cb61E6D4A0Cb5661933B">Udacity Airlines</option>
+                                        <option value="0xd95214EB57487F0667D9aC4142cc72bd861E6875">Block Jet</option>
+                                        <option value="0x13A0739d9DED0e70308b6d09e1c6753b843609FA">Surety Airways</option>
+                                        <option value="0x1946D55Fe9B4b2A2C4ad1f4837c5612e50d5e07f">Bitcoin Air</option>
+                                        <option value="0x6667Cf254C1fb66B5C99Cea8d16165cfE187591C">Ether Airways</option>
+                                        <option value="0xc3fD34ee4A62c4E1DfDCC45585Dfc62e1d93E1F1">Dash Air</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div class="field">
                                 <div class="select">
                                     <select id="buy-insurance-flight">
@@ -151,9 +168,23 @@
                                 </div>
                             </div>
                             <h1 class="title is-3">Claim payout</h1>
+                            <label class="label">Select airline</label>
                             <div class="field">
                                 <div class="select">
-                                    <select id="claim-insurance-flight">
+                                    <select id="payout-insurance-airline">
+                                        <option>Select airline</option>
+                                        <option value="0x4A6737CE60F73F5553E2cb61E6D4A0Cb5661933B">Udacity Airlines</option>
+                                        <option value="0xd95214EB57487F0667D9aC4142cc72bd861E6875">Block Jet</option>
+                                        <option value="0x13A0739d9DED0e70308b6d09e1c6753b843609FA">Surety Airways</option>
+                                        <option value="0x1946D55Fe9B4b2A2C4ad1f4837c5612e50d5e07f">Bitcoin Air</option>
+                                        <option value="0x6667Cf254C1fb66B5C99Cea8d16165cfE187591C">Ether Airways</option>
+                                        <option value="0xc3fD34ee4A62c4E1DfDCC45585Dfc62e1d93E1F1">Dash Air</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <div class="select">
+                                    <select id="payout-insurance-flight">
                                         <option>Select flight</option>
                                         <option>ABC1234</option>
                                         <option>DEF5678</option>
@@ -164,7 +195,7 @@
                             </div>
                             <div class="field">
                                 <div class="control">
-                                    <button id="claim" class="button is-danger">Claim</button>
+                                    <button id="payout" class="button is-danger">Claim</button>
                                 </div>
                             </div>
                         </div>
