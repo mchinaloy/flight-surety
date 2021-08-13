@@ -115,12 +115,22 @@ contract FlightSuretyData {
         operational = mode;
     }
 
-    function isAirline(address airline) external view returns(bool) {
+    function isAirline(address airline) external view requireIsOperational returns(bool) {
         return isRegistered(airline) == true && airlines[airline].isFunded == true;
     }
 
-    function isRegistered(address airline) public view returns(bool) {
+    function isRegistered(address airline) public view requireIsOperational returns(bool) {
         return airlines[airline].isRegistered == true;
+    }
+
+    function getInsuranceAmount(address airline, string flight, address passenger) external requireIsOperational returns(uint) {
+        bytes32 key = keccak256(abi.encodePacked(airline, flight));
+        for(uint count=0; count < insurees[key].length; count++) {
+            if(insurees[key][count].passenger == passenger) {
+                return insurees[key][count].insuranceAmount;
+            }
+        }
+        return 0;
     }
 
     /********************************************************************************************/
@@ -192,11 +202,7 @@ contract FlightSuretyData {
     function buy(address airline, string flight, address passenger, uint value) external payable requireIsOperational {
         require(value <= PASSENGER_INSURANCE_LIMIT, "Insurance value must be <= 1 Ether.");
         bytes32 key = keccak256(abi.encodePacked(airline, flight));
-        insurees[key].push(Passenger({
-            passenger: passenger,
-            insuranceAmount: value,
-            creditAmount: 0
-        }));
+        insurees[key].push(Passenger(passenger, value, 0));
         emit InsurancePurchased(flight, passenger, value);
     }
 

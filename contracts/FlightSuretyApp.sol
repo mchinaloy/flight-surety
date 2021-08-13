@@ -96,7 +96,7 @@ contract FlightSuretyApp {
         flightSuretyData.registerFlight(airline, flight, timestamp);
     }
     
-    function fund(address airline) external payable requireIsOperational {
+    function fund(address airline, uint) external payable requireIsOperational {
         flightSuretyData.fund(airline, msg.value);
     }
 
