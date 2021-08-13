@@ -15,7 +15,6 @@ contract FlightSuretyData {
 
     mapping(address => address[]) private votes;
     mapping(address => Airline) private airlines;
-    mapping(string => Flight) private flights;
     mapping(bytes32 => Passenger[]) private insurees;
 
     struct Airline {
@@ -23,12 +22,6 @@ contract FlightSuretyData {
         bool isRegistered;
         bool isFunded;
         uint votes;
-    }
-
-    struct Flight {
-        address airline;
-        string flight;  
-        uint timestamp;
     }
 
     struct Passenger {
@@ -48,7 +41,6 @@ contract FlightSuretyData {
     event AirlineRegistered(address airline);
     event AirlineVoteRegistered(address proposer, address airline);
     event AirlineFunded(address airline);
-    event FlightRegistered(address airline, string flight, uint timestamp);
     event InsurancePurchased(string flight, address passenger, uint insuranceAmount);
     event CreditIssued(address airline, string flight, address passenger, uint creditAmount);
     event CreditTransferred(address airline, string flight, address passenger, uint creditAmount);
@@ -115,6 +107,24 @@ contract FlightSuretyData {
         operational = mode;
     }
 
+    function setAirlineIsRegistered(address airline, bool isRegistered) external requireContractOwner {
+        airlines[airline].isRegistered = isRegistered;
+    }
+
+    function setAirlineIsFunded(address airline, bool isFunded) external requireContractOwner {
+        airlines[airline].isFunded = isFunded;
+    }
+
+    function resetPassengerInsurance(address airline, string flight, address passenger) requireContractOwner {
+        bytes32 key = keccak256(abi.encodePacked(airline, flight));
+        for(uint count=0; count < insurees[key].length; count++) {
+            if(insurees[key][count].passenger == passenger) {
+                insurees[key][count].insuranceAmount = 0;
+                insurees[key][count].creditAmount = 0;
+            }
+        }
+    }
+
     function isAirline(address airline) external view requireIsOperational returns(bool) {
         return isRegistered(airline) == true && airlines[airline].isFunded == true;
     }
@@ -123,11 +133,25 @@ contract FlightSuretyData {
         return airlines[airline].isRegistered == true;
     }
 
-    function getInsuranceAmount(address airline, string flight, address passenger) external requireIsOperational returns(uint) {
+    function isAirlineFunded(address airline) public view requireIsOperational returns(bool) {
+        return airlines[airline].isFunded; 
+    }
+
+    function getInsuranceAmount(address airline, string flight, address passenger) public view requireIsOperational returns(uint) {
         bytes32 key = keccak256(abi.encodePacked(airline, flight));
         for(uint count=0; count < insurees[key].length; count++) {
             if(insurees[key][count].passenger == passenger) {
                 return insurees[key][count].insuranceAmount;
+            }
+        }
+        return 0;
+    }
+
+    function getCreditAmount(address airline, string flight, address passenger) public view requireIsOperational returns(uint) {
+        bytes32 key = keccak256(abi.encodePacked(airline, flight));
+        for(uint count=0; count < insurees[key].length; count++) {
+            if(insurees[key][count].passenger == passenger) {
+                return insurees[key][count].creditAmount;
             }
         }
         return 0;
@@ -185,16 +209,6 @@ contract FlightSuretyData {
         }
     }
 
-    function registerFlight(address airline, string flight, uint timestamp) external requireIsOperational {
-        require(msg.sender == airlines[msg.sender].airline, "You must be the airline owner to register a flight.");
-        flights[flight] = Flight({
-            airline: airline,
-            flight: flight,
-            timestamp: timestamp
-        });
-        emit FlightRegistered(airline, flight, timestamp);
-    }
-
    /**
     * @dev Buy insurance for a flight
     *
@@ -213,7 +227,7 @@ contract FlightSuretyData {
         bytes32 key = keccak256(abi.encodePacked(airline, flight));
         for(uint count = 0; count < insurees[key].length; count++) {
             if(insurees[key][count].insuranceAmount > 0) {
-                uint256 creditAmount = insurees[key][count].insuranceAmount.mul(15).div(10);
+                uint creditAmount = insurees[key][count].insuranceAmount.div(2);
                 insurees[key][count].creditAmount = creditAmount;
                 emit CreditIssued(airline, flight, insurees[key][count].passenger, creditAmount);
             }
@@ -230,9 +244,10 @@ contract FlightSuretyData {
 
         for(uint count = 0; count < insurees[key].length; count++) {
             if(insurees[key][count].passenger == passenger) {
-                uint256 creditAmount = insurees[key][count].creditAmount;
+                uint creditAmount = insurees[key][count].creditAmount + insurees[key][count].insuranceAmount;
                 require(creditAmount > 0, "No credit available to be withdrawn.");
                 insurees[key][count].creditAmount = 0;
+                insurees[key][count].insuranceAmount = 0;
                 passenger.transfer(creditAmount);
                 emit CreditTransferred(airline, flight, passenger, creditAmount);
             }
@@ -261,7 +276,6 @@ contract FlightSuretyData {
     function() external payable {
         fund(contractOwner, msg.value);
     }
-
 
 }
 

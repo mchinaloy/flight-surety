@@ -27,7 +27,6 @@ contract FlightSuretyApp {
     address private contractOwner;
     FlightSuretyData private flightSuretyData;
 
-
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
     /********************************************************************************************/
@@ -87,16 +86,8 @@ contract FlightSuretyApp {
     function registerAirline(address proposer, address airline) external requireIsOperational {
         flightSuretyData.registerAirline(proposer, airline);
     }
-
-   /**
-    * @dev Register a future flight for insuring.
-    *
-    */  
-    function registerFlight(address airline, string flight, uint256 timestamp) external requireIsOperational {
-        flightSuretyData.registerFlight(airline, flight, timestamp);
-    }
     
-    function fund(address airline, uint) external payable requireIsOperational {
+    function fund(address airline) external payable requireIsOperational {
         flightSuretyData.fund(airline, msg.value);
     }
 
@@ -201,8 +192,6 @@ contract FlightSuretyApp {
     // time of registration (i.e. uninvited oracles are not welcome)
     function submitOracleResponse(uint8 index, address airline, string flight, uint256 timestamp, uint8 statusCode) external {
         require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request.");
-
-
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp)); 
         require(oracleResponses[key].isOpen, "Flight or timestamp do not match oracle request.");
 
@@ -212,9 +201,7 @@ contract FlightSuretyApp {
         // oracles respond with the *** same *** information
         emit OracleReport(airline, flight, timestamp, statusCode);
         if (oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES) {
-
             emit FlightStatusInfo(airline, flight, timestamp, statusCode);
-
             // Handle flight status as appropriate
             processFlightStatus(airline, flight, timestamp, statusCode);
         }
@@ -246,14 +233,11 @@ contract FlightSuretyApp {
     // Returns array of three non-duplicating integers from 0-9
     function getRandomIndex(address account) internal returns (uint8) {
         uint8 maxValue = 10;
-
         // Pseudo random number...the incrementing nonce adds variation
         uint8 random = uint8(uint256(keccak256(abi.encodePacked(blockhash(block.number - nonce++), account))) % maxValue);
-
         if (nonce > 250) {
             nonce = 0;  // Can only fetch blockhashes for last 256 blocks so we adapt
         }
-
         return random;
     }
 
@@ -265,7 +249,6 @@ contract FlightSuretyData {
     function isOperational() public view returns(bool) {}
     function setOperatingStatus(bool mode) external {}
     function registerAirline(address proposer, address airline) external {}
-    function registerFlight(address airline, string flight, uint256 timestamp) {}
     function buy(address airline, string flight, address passenger, uint value) external payable {}
     function credit(address airline, string flight) external {}
     function payout(address airline, string flight, address passenger) external {}

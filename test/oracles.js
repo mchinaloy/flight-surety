@@ -20,8 +20,10 @@ contract('Oracles', async (accounts) => {
   });
 
   it('can register oracles', async () => {
+    // setup
     let fee = await config.flightSuretyApp.REGISTRATION_FEE.call();
 
+    // act & assert
     for(let a=1; a <= TEST_ORACLES_COUNT; a++) {      
       await config.flightSuretyApp.registerOracle({ from: accounts[a], value: fee });
       let result = await config.flightSuretyApp.getMyIndexes.call({from: accounts[a]});
@@ -31,9 +33,11 @@ contract('Oracles', async (accounts) => {
   });
 
   it('can request flight status', async () => {
+    // setup
     let flight = 'ND1309'; // Course number
     let timestamp = Math.floor(Date.now() / 1000);
 
+    // act & assert
     // Submit a request for oracles to get status information for a flight
     await config.flightSuretyApp.fetchFlightStatus(config.firstAirline, flight, timestamp);
 
