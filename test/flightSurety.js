@@ -128,6 +128,10 @@ contract('Flight Surety Tests', async (accounts) => {
         assert.equal(result, true, "Airline should be funded after funding has been provided");
     });
 
+    it('(airline) can be registered via Multi-Party concensus', async() => {
+        // TODO
+    });
+
     it('(passenger) can buy insurance for an airline flight using buy()', async() => {
         // setup
         let airline = accounts[2];
@@ -143,6 +147,7 @@ contract('Flight Surety Tests', async (accounts) => {
     });
 
     it('(passenger) can buy insurance and receive a credit using credit()', async() => {
+        // TODO
         // setup
         let airline = accounts[1];
         let flight = "ABC1234";
@@ -152,8 +157,24 @@ contract('Flight Surety Tests', async (accounts) => {
         await config.flightSuretyData.credit(airline, flight, {from: config.owner});
 
         // act
-        // await config.flightSuretyApp.payout(airline, flight, config.owner, {from: config.owner});
         let result = await config.flightSuretyData.getCreditAmount(airline, flight, config.owner, {from: config.owner});
+
+        // assert
+        assert.equal(result, 1, "Passenger should have a credit amount waiting to be paid out");
+    });
+
+    it('(passenger can buy insurance, receive a credit and claim it using payout()', async() => {
+        // TODO
+        // setup
+        let airline = accounts[1];
+        let flight = "ABC1234";
+
+        await config.flightSuretyData.resetPassengerInsurance(airline, flight, config.owner, {from: config.owner});
+        await config.flightSuretyApp.buy(airline, flight, config.owner, "1");
+        await config.flightSuretyData.credit(airline, flight, {from: config.owner});
+
+        // act
+        await config.flightSuretyApp.payout(airline, flight, config.owner, {from: config.owner});
 
         // assert
         assert.equal(result, 1, "Passenger should have a credit amount waiting to be paid out");
