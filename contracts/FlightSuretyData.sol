@@ -107,15 +107,15 @@ contract FlightSuretyData {
         operational = mode;
     }
 
-    function setAirlineIsRegistered(address airline, bool isRegistered) external requireContractOwner {
+    function setAirlineIsRegistered(address airline, bool isRegistered) external requireContractOwner requireIsOperational {
         airlines[airline].isRegistered = isRegistered;
     }
 
-    function setAirlineIsFunded(address airline, bool isFunded) external requireContractOwner {
+    function setAirlineIsFunded(address airline, bool isFunded) external requireContractOwner requireIsOperational {
         airlines[airline].isFunded = isFunded;
     }
 
-    function resetPassengerInsurance(address airline, string flight, address passenger) requireContractOwner {
+    function resetPassengerInsurance(address airline, string flight, address passenger) requireContractOwner requireIsOperational {
         bytes32 key = keccak256(abi.encodePacked(airline, flight));
         for(uint count=0; count < insurees[key].length; count++) {
             if(insurees[key][count].passenger == passenger) {
