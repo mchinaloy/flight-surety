@@ -8,6 +8,12 @@ contract('Flight Surety Tests', async (accounts) => {
     config = await Test.Config(accounts);
   });
 
+  beforeEach(async() => {
+    for(let count=1; count < accounts.length; count++) {
+        await config.flightSuretyData.resetAirline(accounts[count]);
+    }
+  });
+
   /****************************************************************************************/
   /* Operations and Settings                                                              */
   /****************************************************************************************/
@@ -69,26 +75,25 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(airline) can be registered by an existing airline that is registered and funded', async() => {
         // setup
-        let newAirline = accounts[1];
-        await config.flightSuretyData.setAirlineIsRegistered(newAirline, false, {from: config.owner});
+        let airline = accounts[1];
 
         // act
-        await config.flightSuretyApp.registerAirline(config.owner, newAirline, {from: config.owner});
+        await config.flightSuretyApp.registerAirline(config.owner, airline, {from: config.owner});
 
         // assert
-        let result = await config.flightSuretyData.isRegistered(newAirline);
+        let result = await config.flightSuretyData.isRegistered(airline);
         assert.equal(result, true, "Airline should be registered if the proposer is an Airline who is registered");
     });
 
     it('(airline) cannot register an airline using registerAirline() if the proposer is not registered', async() => {
         // setup
         let proposer = accounts[1];
-        let newAirline = accounts[2];
+        let airline = accounts[2];
 
         // act
         let reverted = false;
         try {
-            await config.flightSuretyApp.registerAirline(newAirline, {from: proposer});
+            await config.flightSuretyApp.registerAirline(airline, {from: proposer});
         } catch(e) {
             reverted = true;
         }
@@ -96,16 +101,15 @@ contract('Flight Surety Tests', async (accounts) => {
         assert.equal(reverted, true, "Airline should not be registered if the proposer is not registered");
     });
 
-    it('(airline) cannot register an Airline using registerAirline() if the proposer is not funded', async() => {
+    it('(airline) cannot register an airline using registerAirline() if the proposer is not funded', async() => {
         // setup
         let proposer = accounts[1];
-        let newAirline = accounts[2];
-        await config.flightSuretyData.setAirlineIsRegistered(proposer, false, {from: config.owner});
+        let airline = accounts[2];
 
         // act
         try {
-            await config.flightSuretyApp.registerAirline(proposer, {from: config.firstAirline});
-            await config.flightSuretyApp.registerAirline(newAirline, {from: proposer});
+            await config.flightSuretyApp.registerAirline(proposer, {from: config.owner});
+            await config.flightSuretyApp.registerAirline(airline, {from: proposer});
         }
         catch(e) {
             reverted = true;
@@ -117,29 +121,62 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(airline) can be funded using fund()', async() => {
         // setup
-        let airlineToFund = accounts[1];
-        await config.flightSuretyData.setAirlineIsFunded(airlineToFund, false);
+        let airline = accounts[1];
+        await config.flightSuretyData.setAirlineIsFunded(airline, false);
 
         // act
-        await config.flightSuretyApp.fund(airlineToFund, {from: config.owner, value: "10000000000000000000"});
+        await config.flightSuretyApp.fund(airline, {from: config.owner, value: "10000000000000000000"});
 
         // assert
-        let result = await config.flightSuretyData.isAirlineFunded(airlineToFund);
+        let result = await config.flightSuretyData.isAirlineFunded(airline);
         assert.equal(result, true, "Airline should be funded after funding has been provided");
     });
 
     it('(airline) can be registered via Multi-Party concensus', async() => {
-        // TODO
+        // setup
+        let airlineOne = accounts[1];
+        let airlineTwo = accounts[2];
+        let airlineThree = accounts[3];
+        let airlineFour = accounts[4];
+        let registrationFee = "10000000000000000000";
+
+        // act
+        await config.flightSuretyApp.registerAirline(config.owner, airlineOne, {from: config.owner});
+        await config.flightSuretyApp.fund(airlineOne, {from: config.owner, value: registrationFee});
+
+        await config.flightSuretyApp.registerAirline(airlineOne, airlineTwo, {from: config.owner});
+        await config.flightSuretyApp.fund(airlineTwo, {from: config.owner, value: registrationFee});
+
+        await config.flightSuretyApp.registerAirline(airlineTwo, airlineThree, {from: config.owner});
+        await config.flightSuretyApp.fund(airlineThree, {from: config.owner, value: registrationFee});
+
+        // Fifth airline
+        await config.flightSuretyApp.registerAirline(airlineThree, airlineFour, {from: config.owner});
+        
+        // Fifth airline is not Registered yet (only has 1 vote)
+        let result = await config.flightSuretyData.isRegistered(airlineFour, {from: config.owner});
+        assert.equal(result, false, "Airline should only be registered after receiving enough votes");
+
+        // Submit vote for majority so that the airline can be registered
+        await config.flightSuretyApp.registerAirline(airlineTwo, airlineFour, {from: config.owner});
+
+        // assert
+        // Fifth airline should now be registered (has sufficient votes)
+        let finalResult = await config.flightSuretyData.isRegistered(airlineFour, {from: config.owner});
+        assert.equal(finalResult, true, "Airline should only be registered after receiving enough votes")
     });
 
     it('(passenger) can buy insurance for an airline flight using buy()', async() => {
         // setup
         let airline = accounts[2];
         let flight = "ABC1234";
+
         await config.flightSuretyData.resetPassengerInsurance(airline, flight, config.owner, {from: config.owner});
+        await config.flightSuretyApp.registerAirline(config.owner, airline, {from: config.owner});
+        await config.flightSuretyApp.fund(airline, {from: config.owner, value: "10000000000000000000"});
 
         // act
-        await config.flightSuretyApp.buy(airline, flight, config.owner, "1");
+        await config.flightSuretyApp.buy(airline, flight, config.owner, "1", {from: config.owner});
 
         // assert
         let result = await config.flightSuretyData.getInsuranceAmount(airline, flight, config.owner, {from: config.owner});
@@ -147,13 +184,14 @@ contract('Flight Surety Tests', async (accounts) => {
     });
 
     it('(passenger) can buy insurance and receive a credit using credit()', async() => {
-        // TODO
         // setup
         let airline = accounts[1];
         let flight = "ABC1234";
 
         await config.flightSuretyData.resetPassengerInsurance(airline, flight, config.owner, {from: config.owner});
-        await config.flightSuretyApp.buy(airline, flight, config.owner, "1");
+        await config.flightSuretyApp.registerAirline(config.owner, airline, {from: config.owner});
+        await config.flightSuretyApp.fund(airline, {from: config.owner, value: "10000000000000000000"});
+        await config.flightSuretyApp.buy(airline, flight, config.owner, "1", {from: config.owner});
         await config.flightSuretyData.credit(airline, flight, {from: config.owner});
 
         // act
@@ -164,14 +202,18 @@ contract('Flight Surety Tests', async (accounts) => {
     });
 
     it('(passenger can buy insurance, receive a credit and claim it using payout()', async() => {
-        // TODO
         // setup
         let airline = accounts[1];
         let flight = "ABC1234";
 
         await config.flightSuretyData.resetPassengerInsurance(airline, flight, config.owner, {from: config.owner});
-        await config.flightSuretyApp.buy(airline, flight, config.owner, "1");
+        await config.flightSuretyApp.registerAirline(config.owner, airline, {from: config.owner});
+        await config.flightSuretyApp.fund(airline, {from: config.owner, value: "10000000000000000000"});
+        await config.flightSuretyApp.buy(airline, flight, config.owner, "1", {from: config.owner});
         await config.flightSuretyData.credit(airline, flight, {from: config.owner});
+
+        let result1 = await config.flightSuretyData.getCreditAmount(airline, flight, config.owner, {from: config.owner});
+        assert.equal(result1, 1, "Passenger should have > 0 payout waiting");
 
         // act
         await config.flightSuretyApp.payout(airline, flight, config.owner, {from: config.owner});
@@ -179,5 +221,7 @@ contract('Flight Surety Tests', async (accounts) => {
         // assert
         assert.equal(result, 1, "Passenger should have a credit amount waiting to be paid out");
     });
+
+
 
 });
