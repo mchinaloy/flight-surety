@@ -1,18 +1,24 @@
 
 var Test = require('../config/testConfig.js');
+var BigNumber = require('bignumber.js');
+const { default: Web3 } = require('web3');
 
 contract('Flight Surety Tests', async (accounts) => {
 
-  var config;
-  before('setup contract', async () => {
-    config = await Test.Config(accounts);
-  });
+    let FUNDING_FEE_WEI = "10000000000000000000";
+    let INSURANCE_AMOUNT_WEI = "1000000000000000000";
 
-  beforeEach(async() => {
-    for(let count=1; count < accounts.length; count++) {
-        await config.flightSuretyData.resetAirline(accounts[count]);
-    }
-  });
+    var config;
+
+    before('setup contract', async () => {
+        config = await Test.Config(accounts);
+    });
+
+    beforeEach(async() => {
+        for(let count=1; count < accounts.length; count++) {
+            await config.flightSuretyData.resetAirline(accounts[count]);
+        }
+    });
 
   /****************************************************************************************/
   /* Operations and Settings                                                              */
@@ -125,7 +131,7 @@ contract('Flight Surety Tests', async (accounts) => {
         await config.flightSuretyData.setAirlineIsFunded(airline, false);
 
         // act
-        await config.flightSuretyApp.fund(airline, {from: config.owner, value: "10000000000000000000"});
+        await config.flightSuretyApp.fund(airline, {from: config.owner, value: FUNDING_FEE_WEI});
 
         // assert
         let result = await config.flightSuretyData.isAirlineFunded(airline);
@@ -173,55 +179,64 @@ contract('Flight Surety Tests', async (accounts) => {
 
         await config.flightSuretyData.resetPassengerInsurance(airline, flight, config.owner, {from: config.owner});
         await config.flightSuretyApp.registerAirline(config.owner, airline, {from: config.owner});
-        await config.flightSuretyApp.fund(airline, {from: config.owner, value: "10000000000000000000"});
+        await config.flightSuretyApp.fund(airline, {from: config.owner, value: FUNDING_FEE_WEI});
 
         // act
-        await config.flightSuretyApp.buy(airline, flight, config.owner, "1", {from: config.owner});
+        await config.flightSuretyApp.buy(airline, flight, config.owner, {from: config.owner, value: INSURANCE_AMOUNT_WEI});
 
         // assert
         let result = await config.flightSuretyData.getInsuranceAmount(airline, flight, config.owner, {from: config.owner});
-        assert.equal(result, 1, "Passenger should now be insured with an airline for the given flight");
+        result = new BigNumber(result);
+        
+        assert.equal(result.toString(), INSURANCE_AMOUNT_WEI, "Passenger should now be insured with an airline for the given flight");
     });
 
-    it('(passenger) can buy insurance and receive a credit using credit()', async() => {
+    it('(passenger) can buy insurance and receive a x1.5 credit using credit()', async() => {
         // setup
         let airline = accounts[1];
         let flight = "ABC1234";
 
         await config.flightSuretyData.resetPassengerInsurance(airline, flight, config.owner, {from: config.owner});
         await config.flightSuretyApp.registerAirline(config.owner, airline, {from: config.owner});
-        await config.flightSuretyApp.fund(airline, {from: config.owner, value: "10000000000000000000"});
-        await config.flightSuretyApp.buy(airline, flight, config.owner, "1", {from: config.owner});
+        await config.flightSuretyApp.fund(airline, {from: config.owner, value: FUNDING_FEE_WEI});
+        await config.flightSuretyApp.buy(airline, flight, config.owner, {from: config.owner, value: INSURANCE_AMOUNT_WEI});
         await config.flightSuretyData.credit(airline, flight, {from: config.owner});
 
         // act
         let result = await config.flightSuretyData.getCreditAmount(airline, flight, config.owner, {from: config.owner});
+        result = new BigNumber(result);
 
         // assert
-        assert.equal(result, 1, "Passenger should have a credit amount waiting to be paid out");
+        assert.equal(result.toString(), "1500000000000000000", "Passenger should have a credit amount waiting to be paid out");
     });
 
-    it('(passenger can buy insurance, receive a credit and claim it using payout()', async() => {
+    it('(passenger) can buy insurance and receive a x1.5 credit and can claim it using payout()', async() => {
         // setup
         let airline = accounts[1];
+        let passenger = accounts[2];
         let flight = "ABC1234";
-
+        
         await config.flightSuretyData.resetPassengerInsurance(airline, flight, config.owner, {from: config.owner});
         await config.flightSuretyApp.registerAirline(config.owner, airline, {from: config.owner});
-        await config.flightSuretyApp.fund(airline, {from: config.owner, value: "10000000000000000000"});
-        await config.flightSuretyApp.buy(airline, flight, config.owner, "1", {from: config.owner});
+        await config.flightSuretyApp.fund(airline, {from: config.owner, value: FUNDING_FEE_WEI});
+        await config.flightSuretyApp.buy(airline, flight, passenger, {from: config.owner, value: INSURANCE_AMOUNT_WEI});
+
+        let balanceBeforePayout = new BigNumber(await web3.eth.getBalance(passenger));
+    
         await config.flightSuretyData.credit(airline, flight, {from: config.owner});
 
-        let result1 = await config.flightSuretyData.getCreditAmount(airline, flight, config.owner, {from: config.owner});
-        assert.equal(result1, 1, "Passenger should have > 0 payout waiting");
+        let payoutAmount = await config.flightSuretyData.getPayoutAmount(airline, flight, passenger, {from: config.owner});
+        payoutAmount = new BigNumber(payoutAmount);
 
         // act
-        await config.flightSuretyApp.payout(airline, flight, config.owner, {from: config.owner});
+        await config.flightSuretyApp.payout(airline, flight, passenger, {from: config.owner});
 
         // assert
-        assert.equal(result, 1, "Passenger should have a credit amount waiting to be paid out");
+        let balanceAfterPayout = new BigNumber(await web3.eth.getBalance(passenger));
+        let diff = new BigNumber(balanceAfterPayout.minus(balanceBeforePayout));
+        let minimumDiff = new BigNumber("1250000000000000000");
+
+        assert(diff.gte(minimumDiff) == true, "Balance should have increased by the expected multiplier after payout");
     });
-
-
 
 });

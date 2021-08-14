@@ -10,8 +10,6 @@ contract FlightSuretyData {
     /********************************************************************************************/
 
     uint AIRLINE_REGISTRATION_LIMIT = 4;
-    uint AIRLINE_FUNDING_COST = 10 ether;
-    uint PASSENGER_INSURANCE_LIMIT = 1 ether;
 
     mapping(address => address[]) private votes;
     mapping(address => Airline) private airlines;
@@ -134,11 +132,19 @@ contract FlightSuretyData {
 
     function resetPassengerInsurance(address airline, string flight, address passenger) requireContractOwner requireIsOperational {
         bytes32 key = keccak256(abi.encodePacked(airline, flight));
+        uint indexToRemove = 0;
+        bool insuranceFound = false;
         for(uint count=0; count < insurees[key].length; count++) {
             if(insurees[key][count].passenger == passenger) {
                 insurees[key][count].insuranceAmount = 0;
                 insurees[key][count].creditAmount = 0;
+                indexToRemove = count; 
+                insuranceFound = true;
+                break;
             }
+        }
+        if(insuranceFound == true) {
+            delete insurees[key][indexToRemove];
         }
     }
 
@@ -182,7 +188,7 @@ contract FlightSuretyData {
         bytes32 key = keccak256(abi.encodePacked(airline, flight));
         for(uint count = 0; count < insurees[key].length; count++) {
             if(insurees[key][count].passenger == passenger) {
-                uint creditAmount = insurees[key][count].creditAmount + insurees[key][count].insuranceAmount;
+                uint creditAmount = insurees[key][count].insuranceAmount.mul(15).div(10);
                 return creditAmount;
             }
         }
@@ -207,7 +213,7 @@ contract FlightSuretyData {
                 isFunded: false,
                 votes: 0
             });
-            registeredAirlines = registeredAirlines + 1;
+            registeredAirlines = registeredAirlines.add(1);
             emit AirlineRegistered(airline);
         } else {
             // Multi-party concensus of 50%
@@ -230,7 +236,7 @@ contract FlightSuretyData {
                     isFunded: false,
                     votes: votes[airline].length
                 });
-                registeredAirlines = registeredAirlines + 1;
+                registeredAirlines = registeredAirlines.add(1);
                 emit AirlineRegistered(airline);
             } else {
                 emit AirlineVoteRegistered(proposer, airline);
@@ -242,11 +248,10 @@ contract FlightSuretyData {
     * @dev Buy insurance for a flight
     *
     */   
-    function buy(address airline, string flight, address passenger, uint value) external payable requireIsOperational requireIsAirlineActive(airline) {
-        require(value <= PASSENGER_INSURANCE_LIMIT, "Insurance value must be <= 1 Ether.");
+    function buy(address airline, string flight, address passenger) external payable requireIsOperational requireIsAirlineActive(airline) {
         bytes32 key = keccak256(abi.encodePacked(airline, flight));
-        insurees[key].push(Passenger(passenger, value, 0));
-        emit InsurancePurchased(flight, passenger, value);
+        insurees[key].push(Passenger(passenger, msg.value, 0));
+        emit InsurancePurchased(flight, passenger, msg.value);
     }
 
     /**
@@ -272,7 +277,7 @@ contract FlightSuretyData {
         bytes32 key = keccak256(abi.encodePacked(airline, flight));
         for(uint count = 0; count < insurees[key].length; count++) {
             if(insurees[key][count].passenger == passenger) {
-                uint creditAmount = insurees[key][count].creditAmount + insurees[key][count].insuranceAmount;
+                uint creditAmount = insurees[key][count].creditAmount.add(insurees[key][count].insuranceAmount);
                 require(creditAmount > 0, "No credit available to be withdrawn.");
                 insurees[key][count].creditAmount = 0;
                 insurees[key][count].insuranceAmount = 0;
@@ -287,8 +292,7 @@ contract FlightSuretyData {
     *      resulting in insurance payouts, the contract should be self-sustaining
     *
     */   
-    function fund(address airline, uint value) public payable requireIsOperational {
-        require(value >= AIRLINE_FUNDING_COST, "Funding cost must be >= 10 Ether.");
+    function fund(address airline) public payable requireIsOperational {
         airlines[airline].isFunded = true;
         emit AirlineFunded(airline);
     }
@@ -302,7 +306,7 @@ contract FlightSuretyData {
     *
     */
     function() external payable {
-        fund(contractOwner, msg.value);
+        fund(contractOwner);
     }
 
 }

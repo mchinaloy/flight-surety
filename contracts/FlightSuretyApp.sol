@@ -16,6 +16,9 @@ contract FlightSuretyApp {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
+    uint AIRLINE_FUNDING_COST = 10 ether;
+    uint PASSENGER_INSURANCE_LIMIT = 1 ether;
+
     // Flight status codees
     uint8 private constant STATUS_CODE_UNKNOWN = 0;
     uint8 private constant STATUS_CODE_ON_TIME = 10;
@@ -88,11 +91,13 @@ contract FlightSuretyApp {
     }
     
     function fund(address airline) external payable requireIsOperational {
-        flightSuretyData.fund(airline, msg.value);
+        require(msg.value >= AIRLINE_FUNDING_COST, "Funding cost must be >= 10 Ether.");
+        flightSuretyData.fund.value(msg.value)(airline);
     }
 
-    function buy(address airline, string flight, address passenger, uint value) external payable requireIsOperational {
-        flightSuretyData.buy(airline, flight, passenger, value);
+    function buy(address airline, string flight, address passenger) external payable requireIsOperational {
+        require(msg.value <= PASSENGER_INSURANCE_LIMIT, "Insurance value must be <= 1 Ether.");
+        flightSuretyData.buy.value(msg.value)(airline, flight, passenger);
     }
 
     function payout(address airline, string flight, address passenger) external requireIsOperational {
@@ -249,8 +254,8 @@ contract FlightSuretyData {
     function isOperational() public view returns(bool) {}
     function setOperatingStatus(bool mode) external {}
     function registerAirline(address proposer, address airline) external {}
-    function buy(address airline, string flight, address passenger, uint value) external payable {}
+    function buy(address airline, string flight, address passenger) external payable {}
     function credit(address airline, string flight) external {}
     function payout(address airline, string flight, address passenger) external {}
-    function fund(address airline, uint value) external payable {}
+    function fund(address airline) external payable {}
 }

@@ -80,7 +80,7 @@ export default class Contract {
             value: value
         }
         self.flightSuretyApp.methods
-            .buy(payload.airline, payload.flight, self.owner, payload.value)
+            .buy(payload.airline, payload.flight, self.owner)
             .send({from: self.owner, value: payload.value}, (error) => {
                 if(error) {
                     payload.message = error;
